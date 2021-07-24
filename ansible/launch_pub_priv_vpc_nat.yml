@@ -85,3 +85,15 @@
     register: public_route_table
   - debug:
         var:  public_route_table
+
+  - name: Deploy Port Scanner 
+    community.aws.lambda:
+      name: PortScan
+      state: present
+      zip_file: function/func.zip
+      runtime: 'python3.6'
+      role: 'arn:aws:iam::674406573293:role/lambda-kratos-exec-role'
+      handler: 'lambda_handler.lambda_handler'
+      vpc_subnet_ids:
+      - "{{ private_subnet.subnet.id }}"  
+   
