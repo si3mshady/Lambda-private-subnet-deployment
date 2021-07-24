@@ -1,36 +1,37 @@
-
-- hosts: localhost 
-  tasks: 
-  - name: Create New VPC 
+---
+# yamllint disable
+- hosts: localhost
+  tasks:
+  - name: Create New VPC
     ec2_vpc_net:
       name: VPC_Sandbox
       cidr_block: 172.22.0.0/16
       region: us-east-1
       tags:
-        env: sandbox        
-    register: vpc      
+        env: sandbox
+    register: vpc   
   - debug:
       var: vpc
   - copy:
       content: "{{ vpc.vpc.id }}"
       dest: "vpc_id"
-  - name: Create New VPC 
+  - name: Create New VPC
     ec2_vpc_igw:
       vpc_id:  "{{ vpc.vpc.id }}"
       state: present
     register: igw
   - debug:
       var: igw
-  - name: Create Public Subnet 
+  - name: Create Public Subnet
     ec2_vpc_subnet:
       state: present
       vpc_id: "{{ vpc.vpc.id  }}"
       cidr: 172.22.1.0/24
       tags:
-        subnet: public 
-    register: public_subnet  
+        subnet: public
+    register: public_subnet
   - debug:
-      var: public_subnet 
+      var: public_subnet
   - copy:
       content: "{{ public_subnet.subnet.id }}"
       dest: "public_subnet_id"
@@ -68,7 +69,8 @@
           gateway_id: "{{ igw.gateway_id }}"
     register: public_route_table
   - debug:
-      var:  public_route_table 
+      var:  public_route_table
+
   - name:  Create private route table and route to nat gateway
     ec2_vpc_route_table:
       vpc_id: "{{ vpc.vpc.id  }}"
@@ -76,10 +78,10 @@
       tags:
         Name: Private 
       subnets:
-        -  "{{ private_subnet.subnet.id }}" 
+        -  "{{ private_subnet.subnet.id }}"
       routes:
         - dest: 0.0.0.0/0
           gateway_id: "{{ nat_gateway.nat_gateway_id }}"
     register: public_route_table
-- debug:
-      var:  public_route_table
+  - debug:
+        var:  public_route_table
