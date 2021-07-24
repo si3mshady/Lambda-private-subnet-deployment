@@ -10,15 +10,11 @@ pipeline {
                         sudo ./aws/install '''
             }
         }
-        stage('Test') {
+        stage('run ansible playbook') {
             steps {
-                echo 'ansible-playbook launch_pub_priv_vpc_nat.yml'
+                echo 'ansible-playbook ansible/launch_pub_priv_vpc_nat.yml'
             }
         }
-        stage('Deploy') {
-            steps {
-                echo 'Deploying....'
-            }
-        }
+      
     }
 }
