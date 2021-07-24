@@ -1,0 +1,144 @@
+
+- hosts: localhost 
+  tasks:  
+
+  - name: Create New VPC 
+    ec2_vpc_net:
+      name: VPC_Sandbox
+      cidr_block: 172.22.0.0/16
+      region: us-east-1
+      tags:
+        env: sandbox        
+    register: vpc  
+    
+  - debug:
+      var: vpc
+  - copy:
+      content: "{{ vpc.vpc.id }}"
+      dest: "vpc_id"
+
+  - name: Create New VPC 
+    ec2_vpc_igw:
+      vpc_id:  "{{ vpc.vpc.id }}"
+      state: present
+    register: igw
+
+  - debug:
+      var: igw
+
+
+  - name: Create Public Subnet 
+    ec2_vpc_subnet:
+      state: present
+      vpc_id: "{{ vpc.vpc.id  }}"
+      cidr: 172.22.1.0/24
+      tags:
+        subnet: public 
+    register: public_subnet  
+
+  - debug:
+      var: public_subnet 
+
+  - copy:
+      content: "{{ public_subnet.subnet.id }}"
+      dest: "public_subnet_id"
+
+  - name: Create new nat gateway
+    ec2_vpc_nat_gateway:
+      state: present
+      subnet_id: "{{ public_subnet.subnet.id }}"
+      region: us-east-1
+
+    register: nat_gateway
+
+  - debug:
+      var: nat_gateway
+
+  - name: Create Private Subnet 
+    ec2_vpc_subnet:
+      state: present
+      vpc_id: "{{ vpc.vpc.id  }}"
+      cidr: 172.22.2.0/24
+      tags:
+        subnet: private 
+    register: private_subnet 
+
+  - debug:
+      var: private_subnet 
+
+  - copy:
+      content: "{{ private_subnet.subnet.id }}"
+      dest: "private_subnet_id"
+
+  - name: Create public route table and route 
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id  }}"
+      region: us-east-1
+      tags:
+        Name: Public
+      subnets:
+        -  "{{ public_subnet.subnet.id }}" 
+      routes:
+        - dest: 0.0.0.0/0
+          gateway_id: "{{ igw.gateway_id }}"
+    register: public_route_table
+  - debug:
+      var:  public_route_table 
+
+  - name:  Create private route table and route to nat gateway
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id  }}"
+      region: us-east-1
+      tags:
+        Name: Private 
+      subnets:
+        -  "{{ private_subnet.subnet.id }}" 
+      routes:
+        - dest: 0.0.0.0/0
+          gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+    register: public_route_table
+  - debug:
+      var:  public_route_table 
+      
+
+
+
+
+  #   ec2_vpc:  
+  #     state: present
+  #     cidr_block: 172.22.0.0/16
+  #     resource_tags: { "Lambda":"Sandbox" }
+  #     subnets:
+  #       - cidr: 172.22.1.0/24
+  #         az: us-east-1c
+  #         resource_tags: { "Environment":"Sandbox", "Subnet" : "Public" }
+  #       - cidr: 172.22.2.0/24
+  #         az: us-east-1a
+  #         resource_tags: { "Environment":"Sandbox", "Subnet" : "Private" }         
+  #     internet_gateway: True
+  #     route_tables:
+  #       - subnets:
+  #           - 172.22.2.0/24             
+  #         routes:
+  #           - dest: 0.0.0.0/0
+  #             gw: igw
+  #       - subnets:
+  #           - 172.22.1.0/24
+  #         # routes:
+  #         #   - dest: 0.0.0.0/0
+  #         #     gw: igw
+  #     region: us-east-1
+  #     register: vpc
+  # - debug:
+  #   var: vpc
+
+
+  # # - name: Create new nat gateway with client token.
+  # #   community.aws.ec2_vpc_nat_gateway:
+  # #     state: present
+  # #     subnet_id: subnet-12345678
+  # #     eip_address: 52.1.1.1
+  # #     region: ap-southeast-2
+  # #     client_token: abcd-12345678
+  # #   register: new_nat_gateway
+              
