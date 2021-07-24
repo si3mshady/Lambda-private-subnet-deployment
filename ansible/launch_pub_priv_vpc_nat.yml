@@ -94,6 +94,8 @@
       runtime: 'python3.6'
       role: 'arn:aws:iam::674406573293:role/lambda-kratos-exec-role'
       handler: 'lambda_handler.lambda_handler'
+      vpc_security_group_ids: 
+      - sg-061c1315bec7f6ccf
       vpc_subnet_ids:
       - "{{ private_subnet.subnet.id }}"  
    
