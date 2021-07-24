@@ -86,16 +86,32 @@
   - debug:
         var:  public_route_table
 
-  - name: Deploy Port Scanner 
+  - name: Sleep for 60 seconds and continue with play
+    wait_for:
+      timeout: 60
+  
+  - name: example using security group rule descriptions
+    amazon.aws.ec2_group:
+      name:  sandbox
+      description: sg with rule descriptions
+      vpc_id: "{{ vpc.vpc.id  }}"
+      region: us-east-1
+
+    register: securityGroup
+  - debug:
+      var:  securityGroup    
+
+
+  - name: Deploy Port Scanner     
     community.aws.lambda:
-      name: PortScan
-      state: present
-      zip_file: function/func.zip
-      runtime: 'python3.6'
-      role: 'arn:aws:iam::674406573293:role/lambda-kratos-exec-role'
-      handler: 'lambda_handler.lambda_handler'
-      vpc_security_group_ids: 
-      - sg-061c1315bec7f6ccf
-      vpc_subnet_ids:
-      - "{{ private_subnet.subnet.id }}"  
-   
+        name: PortScan
+        state: present
+        zip_file: ../function/func.zip
+        runtime: 'python3.6'
+        role: 'arn:aws:iam::674406573293:role/lambda-kratos-exec-role'
+        handler: 'lambda_handler.lambda_handler'
+        vpc_security_group_ids: 
+        - "{{ securityGroup.group_id }}"
+        vpc_subnet_ids:
+        - "{{ private_subnet.subnet.id }}"  
+  
