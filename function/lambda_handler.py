@@ -31,7 +31,7 @@ def init():
     data = ec2.describe_instances()
     data.get('Reservations')[0].get('Instances')[0].get('PublicIpAddress')
     for i,d in enumerate(data.get('Reservations')):
-        ip = d.get('Instances')[0].get('PrivateIpAddress')
+        ip = d.get('Instances')[0].get('PublicIpAddress')
         if ip != None:
              beginPortScan(ip)
 
